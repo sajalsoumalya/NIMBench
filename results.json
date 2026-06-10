@@ -3,260 +3,40 @@
     "id": "nvidia/nemotron-3-content-safety",
     "label": "Nemotron Content Safety",
     "status": "ok",
-    "total_time_s": 1.084,
+    "total_time_s": 0.909,
     "tokens": 4,
-    "tokens_per_second": 3.69,
-    "ttft_s": 1.045,
+    "tokens_per_second": 4.4,
+    "ttft_s": 0.872,
     "response_preview": "User Safety: safe"
   },
   {
     "id": "z-ai/glm4.7",
     "label": "GLM 4.7",
-    "status": "ok",
-    "total_time_s": 6.919,
-    "tokens": 3,
-    "tokens_per_second": 0.43,
-    "ttft_s": 6.641,
-    "response_preview": "The capital of India is New Delhi."
+    "status": "error",
+    "error": "Error code: 410 - {'type': 'about:blank', 'title': 'Gone', 'status': 410, 'detail': \"The model 'z-ai/glm4.7' has reached its end of life on 2026-05-14T00:00:00Z and is no longer available.\"}",
+    "total_time_s": null,
+    "tokens": 0,
+    "tokens_per_second": 0,
+    "ttft_s": null
   },
   {
     "id": "minimaxai/minimax-m2.7",
     "label": "MiniMax M2.7",
     "status": "ok",
-    "total_time_s": 10.763,
+    "total_time_s": 3.547,
     "tokens": 11,
-    "tokens_per_second": 1.02,
-    "ttft_s": 10.595,
+    "tokens_per_second": 3.1,
+    "ttft_s": 1.135,
     "response_preview": "\n\nThe capital of India is New\u202fDelhi."
   },
   {
     "id": "stepfun-ai/step-3.5-flash",
     "label": "Step 3.5 Flash",
     "status": "ok",
-    "total_time_s": 2.569,
+    "total_time_s": 1.377,
     "tokens": 2,
-    "tokens_per_second": 0.78,
-    "ttft_s": 2.486,
-    "response_preview": "The capital of India is New Delhi."
-  },
-  {
-    "id": "mistralai/devstral-2-123b-instruct-2512",
-    "label": "Devstral 2 123B",
-    "status": "error",
-    "error": "Error code: 400 - {'status': 400, 'title': 'Bad Request', 'detail': \"Function id '7fe236cd-dab4-40d4-a139-b28d6673ffd3': DEGRADED function cannot be invoked\"}",
-    "total_time_s": null,
-    "tokens": 0,
-    "tokens_per_second": 0,
-    "ttft_s": null
-  },
-  {
-    "id": "moonshotai/kimi-k2-thinking",
-    "label": "Kimi K2 Thinking",
-    "status": "ok",
-    "total_time_s": 13.172,
-    "tokens": 2,
-    "tokens_per_second": 0.15,
-    "ttft_s": 12.973,
-    "response_preview": " New Delhi is the capital of India."
-  },
-  {
-    "id": "mistralai/mistral-large-3-675b-instruct-2512",
-    "label": "Mistral Large 3 675B",
-    "status": "ok",
-    "total_time_s": 2.49,
-    "tokens": 9,
-    "tokens_per_second": 3.61,
-    "ttft_s": 1.16,
-    "response_preview": "The capital of India is **New Delhi**."
-  },
-  {
-    "id": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
-    "label": "Nemotron Safety Guard 8B",
-    "status": "ok",
-    "total_time_s": 0.575,
-    "tokens": 8,
-    "tokens_per_second": 13.92,
-    "ttft_s": 0.418,
-    "response_preview": "{\"User Safety\": \"safe\"} "
-  },
-  {
-    "id": "bytedance/seed-oss-36b-instruct",
-    "label": "Seed OSS 36B",
-    "status": "ok",
-    "total_time_s": 74.301,
-    "tokens": 8,
-    "tokens_per_second": 0.11,
-    "ttft_s": 74.065,
-    "response_preview": "The capital of India is New Delhi."
-  },
-  {
-    "id": "qwen/qwen3-coder-480b-a35b-instruct",
-    "label": "Qwen3 Coder 480B",
-    "status": "ok",
-    "total_time_s": 148.918,
-    "tokens": 4,
-    "tokens_per_second": 0.03,
-    "ttft_s": 148.41,
-    "response_preview": "The capital of India is New Delhi."
-  },
-  {
-    "id": "nvidia/llama-3.2-nemoretriever-300m-embed-v1",
-    "label": "NemoRetriever 300M",
-    "status": "error",
-    "error": "404 page not found",
-    "total_time_s": null,
-    "tokens": 0,
-    "tokens_per_second": 0,
-    "ttft_s": null
-  },
-  {
-    "id": "moonshotai/kimi-k2-instruct",
-    "label": "Kimi K2",
-    "status": "ok",
-    "total_time_s": 0.872,
-    "tokens": 2,
-    "tokens_per_second": 2.29,
-    "ttft_s": 0.66,
-    "response_preview": "The capital of India is New Delhi."
-  },
-  {
-    "id": "mistralai/magistral-small-2506",
-    "label": "Magistral Small",
-    "status": "ok",
-    "total_time_s": 11.603,
-    "tokens": 0,
-    "tokens_per_second": 0.0,
-    "ttft_s": null,
-    "response_preview": ""
-  },
-  {
-    "id": "meta/llama-guard-4-12b",
-    "label": "Llama Guard 4 12B",
-    "status": "ok",
-    "total_time_s": 0.821,
-    "tokens": 1,
-    "tokens_per_second": 1.22,
-    "ttft_s": 0.82,
-    "response_preview": "safe"
-  },
-  {
-    "id": "google/gemma-3n-e4b-it",
-    "label": "Gemma 3n E4B",
-    "status": "ok",
-    "total_time_s": 0.975,
-    "tokens": 10,
-    "tokens_per_second": 10.26,
-    "ttft_s": 0.448,
-    "response_preview": "The capital of India is New Delhi. \n"
-  },
-  {
-    "id": "google/gemma-3n-e2b-it",
-    "label": "Gemma 3n E2B",
-    "status": "ok",
-    "total_time_s": 0.898,
-    "tokens": 10,
-    "tokens_per_second": 11.13,
-    "ttft_s": 0.442,
-    "response_preview": "The capital of India is New Delhi. \n"
-  },
-  {
-    "id": "mistralai/mistral-nemotron",
-    "label": "Mistral Nemotron",
-    "status": "ok",
-    "total_time_s": 0.545,
-    "tokens": 9,
-    "tokens_per_second": 16.52,
-    "ttft_s": 0.375,
-    "response_preview": "The capital of India is **New Delhi**."
-  },
-  {
-    "id": "mistralai/mistral-medium-3-instruct",
-    "label": "Mistral Medium 3",
-    "status": "error",
-    "error": "Error code: 404 - {'status': 404, 'title': 'Not Found', 'detail': \"Function id 'e48444ed-3120-443d-b57c-8206fac3b980' version 'null': Specified function in account 'tLOJ1oeRJ3R6E8uzUMVPdVdP0r-n5BNC0LG",
-    "total_time_s": null,
-    "tokens": 0,
-    "tokens_per_second": 0,
-    "ttft_s": null
-  },
-  {
-    "id": "meta/llama-4-maverick-17b-128e-instruct",
-    "label": "Llama-4 Maverick 17B",
-    "status": "ok",
-    "total_time_s": 4.228,
-    "tokens": 8,
-    "tokens_per_second": 1.89,
-    "ttft_s": 4.116,
-    "response_preview": "The capital of India is New Delhi."
-  },
-  {
-    "id": "google/gemma-3-27b-it",
-    "label": "Gemma 3 27B",
-    "status": "error",
-    "error": "Error code: 400 - {'status': 400, 'title': 'Bad Request', 'detail': \"Function id 'b86482fe-8e57-4f0a-8efd-7a45a985377e': DEGRADED function cannot be invoked\"}",
-    "total_time_s": null,
-    "tokens": 0,
-    "tokens_per_second": 0,
-    "ttft_s": null
-  },
-  {
-    "id": "microsoft/phi-4-multimodal-instruct",
-    "label": "Phi-4 Multimodal",
-    "status": "error",
-    "error": "Error code: 400 - {'status': 400, 'title': 'Bad Request', 'detail': \"Function id '3afd112d-ad66-4d29-81b6-e7d6f8225e07': DEGRADED function cannot be invoked\"}",
-    "total_time_s": null,
-    "tokens": 0,
-    "tokens_per_second": 0,
-    "ttft_s": null
-  },
-  {
-    "id": "nvidia/usdcode",
-    "label": "NVIDIA USDCode",
-    "status": "error",
-    "error": "404 page not found",
-    "total_time_s": null,
-    "tokens": 0,
-    "tokens_per_second": 0,
-    "ttft_s": null
-  },
-  {
-    "id": "abacusai/dracarys-llama-3.1-70b-instruct",
-    "label": "Dracarys 70B",
-    "status": "ok",
-    "total_time_s": 179.489,
-    "tokens": 8,
-    "tokens_per_second": 0.04,
-    "ttft_s": 173.267,
-    "response_preview": "The capital of India is New Delhi."
-  },
-  {
-    "id": "nvidia/nemotron-mini-4b-instruct",
-    "label": "Nemotron Mini 4B",
-    "status": "ok",
-    "total_time_s": 0.531,
-    "tokens": 8,
-    "tokens_per_second": 15.07,
-    "ttft_s": 0.419,
-    "response_preview": "The capital of India is New Delhi."
-  },
-  {
-    "id": "google/gemma-2-2b-it",
-    "label": "Gemma 2 2B",
-    "status": "ok",
-    "total_time_s": 0.509,
-    "tokens": 8,
-    "tokens_per_second": 15.71,
-    "ttft_s": 0.39,
-    "response_preview": "The capital of India is New Delhi."
-  },
-  {
-    "id": "upstage/solar-10.7b-instruct",
-    "label": "Solar 10.7B",
-    "status": "ok",
-    "total_time_s": 0.619,
-    "tokens": 8,
-    "tokens_per_second": 12.92,
-    "ttft_s": 0.401,
+    "tokens_per_second": 1.45,
+    "ttft_s": 1.341,
     "response_preview": "The capital of India is New Delhi."
   }
 ]
