@@ -1,0 +1,1007 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NVIDIA NIM — Model Benchmark</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap");
+
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --bg: #05060f;
+        --surface: rgba(255,255,255,0.04);
+        --surface-hover: rgba(255,255,255,0.08);
+        --border: rgba(255,255,255,0.08);
+        --border-hover: rgba(255,255,255,0.15);
+        --green: #76b900;
+        --green-dim: rgba(118,185,0,0.2);
+        --green-glow: rgba(118,185,0,0.35);
+        --cyan: #00d4ff;
+        --red: #ef4444;
+        --text: #e8eaf0;
+        --muted: #6b7280;
+        --bar-h: 32px;
+        --gap: 8px;
+        --radius: 10px;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 32px 24px 64px;
+      }
+
+      .container { max-width: 1100px; margin: 0 auto; }
+
+      /* ── Header ── */
+      .header { text-align: center; margin-bottom: 40px; }
+      .nvidia-badge {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--green); color: #000; font-weight: 700;
+        font-size: 11px; letter-spacing: 2px; padding: 4px 14px;
+        border-radius: 4px; margin-bottom: 16px; text-transform: uppercase;
+      }
+      h1 {
+        font-size: clamp(24px,4vw,44px); font-weight: 900; line-height: 1.1;
+        background: linear-gradient(135deg,#fff 30%,var(--green) 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text; margin-bottom: 8px;
+      }
+      .subtitle { color: var(--muted); font-size: 14px; font-weight: 300; }
+      .subtitle span { color: var(--cyan); font-weight: 600; }
+
+      .tabs {
+        display: flex; gap: 4px; justify-content: center; margin-bottom: 32px;
+        background: var(--surface); border-radius: 10px; padding: 4px;
+        border: 1px solid var(--border); max-width: 400px; margin-inline: auto;
+      }
+      .tab {
+        flex: 1; padding: 8px 16px; text-align: center; border-radius: 7px;
+        font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer;
+        transition: all .2s; border: none; background: none;
+      }
+      .tab.active { background: var(--green); color: #000; }
+      .tab:hover:not(.active) { color: var(--text); background: var(--surface-hover); }
+
+      .section {
+        display: none;
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 14px; padding: 28px; backdrop-filter: blur(12px);
+        margin-bottom: 20px;
+      }
+      .section.active { display: block; }
+
+      .section-title {
+        font-size: 13px; font-weight: 600; letter-spacing: 1.5px;
+        text-transform: uppercase; color: var(--muted); margin-bottom: 20px;
+      }
+      .section-title .badge {
+        background: var(--green-dim); color: var(--green); padding: 2px 8px;
+        border-radius: 10px; font-size: 10px; margin-left: 8px;
+      }
+
+      /* ── Search ── */
+      .search-bar {
+        display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+        align-items: center;
+      }
+      .search-bar input {
+        flex: 1; min-width: 200px;
+        background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+        border-radius: 8px; padding: 10px 14px; color: var(--text);
+        font-size: 13px; outline: none; transition: border .2s;
+      }
+      .search-bar input:focus { border-color: var(--green); }
+      .search-bar input::placeholder { color: var(--muted); }
+      .btn {
+        padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;
+        border: none; cursor: pointer; transition: all .2s; white-space: nowrap;
+      }
+      .btn-primary { background: var(--green); color: #000; }
+      .btn-primary:hover { background: #8ad010; }
+      .btn-primary:disabled { opacity: .35; cursor: not-allowed; }
+      .btn-secondary {
+        background: var(--surface); color: var(--text); border: 1px solid var(--border);
+      }
+      .btn-secondary:hover { background: var(--surface-hover); border-color: var(--border-hover); }
+      .btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+      .btn-danger:hover { background: rgba(239,68,68,0.25); }
+      .btn-sm { padding: 6px 14px; font-size: 12px; }
+
+      /* ── Model Table ── */
+      .model-count { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+      .model-table {
+        max-height: 420px; overflow-y: auto; border: 1px solid var(--border);
+        border-radius: 8px;
+      }
+      .model-table::-webkit-scrollbar { width: 5px; }
+      .model-table::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px; }
+
+      .model-row {
+        display: flex; align-items: center; gap: 12px;
+        padding: 8px 14px; border-bottom: 1px solid var(--border);
+        transition: background .15s; font-size: 13px;
+      }
+      .model-row:last-child { border-bottom: none; }
+      .model-row:hover { background: var(--surface-hover); }
+      .model-row label {
+        flex: 1; display: flex; align-items: center; gap: 10px; cursor: pointer;
+      }
+      .model-row input[type="checkbox"] {
+        accent-color: var(--green); width: 15px; height: 15px; cursor: pointer;
+      }
+      .model-id { color: var(--muted); font-size: 11px; font-family: monospace; }
+      .model-status-dot {
+        width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        transition: background .3s;
+      }
+      .model-status-dot.available { background: var(--green); box-shadow: 0 0 6px var(--green-glow); }
+      .model-status-dot.unavailable { background: var(--red); box-shadow: 0 0 6px rgba(239,68,68,0.3); }
+      .model-status-dot.checking {
+        background: #facc15; animation: pulse 0.8s ease-in-out infinite;
+        box-shadow: 0 0 6px rgba(250,204,21,0.3);
+      }
+      .model-status-dot.unknown { background: var(--muted); }
+      @keyframes pulse {
+        0%, 100% { opacity: .4; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.2); }
+      }
+
+      /* ── Config ── */
+      .config-row {
+        display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end;
+      }
+      .config-row .field { flex: 1; min-width: 250px; }
+      .config-row label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+      .config-row textarea {
+        width: 100%; background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+        border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 13px;
+        outline: none; resize: vertical; min-height: 60px; font-family: inherit;
+        transition: border .2s;
+      }
+      .config-row textarea:focus { border-color: var(--green); }
+      .config-row .btn { height: fit-content; }
+
+      .selected-info {
+        font-size: 12px; color: var(--muted); margin: 12px 0;
+      }
+      .selected-info strong { color: var(--green); }
+
+      /* ── Progress ── */
+      .progress-bar-track {
+        width: 100%; height: 6px; background: rgba(255,255,255,0.08);
+        border-radius: 3px; overflow: hidden; margin-bottom: 16px;
+      }
+      .progress-bar-fill {
+        height: 100%; width: 0%; background: var(--green);
+        border-radius: 3px; transition: width .4s ease;
+        box-shadow: 0 0 12px var(--green-glow);
+      }
+      .progress-status {
+        font-size: 13px; color: var(--muted); margin-bottom: 16px;
+      }
+      .progress-status strong { color: var(--text); }
+      .progress-log {
+        max-height: 350px; overflow-y: auto; background: rgba(0,0,0,0.3);
+        border-radius: 8px; padding: 12px; font-family: monospace; font-size: 12px;
+        border: 1px solid var(--border);
+      }
+      .progress-log::-webkit-scrollbar { width: 5px; }
+      .progress-log::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px; }
+      .log-entry { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+      .log-entry:last-child { border-bottom: none; }
+      .log-testing { color: var(--cyan); }
+      .log-ok { color: var(--green); }
+      .log-error { color: var(--red); }
+      .log-skip { color: var(--muted); }
+      .log-ping { color: var(--muted); font-style: italic; }
+      .log-done { color: var(--green); font-weight: 600; }
+
+      /* ── Results ── */
+      .result-controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+
+      .cards {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px; margin-bottom: 24px;
+      }
+      .card {
+        background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 16px 20px; text-align: center;
+      }
+      .card-val { font-size: 28px; font-weight: 700; color: var(--green); line-height: 1; margin-bottom: 4px; }
+      .card-val.cyan { color: var(--cyan); }
+      .card-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+
+      .chart-section { margin-top: 24px; }
+      .chart-section .chart-title {
+        font-size: 12px; font-weight: 600; color: var(--muted);
+        text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px;
+      }
+      .chart-wrap { margin-bottom: 28px; }
+
+      .bar-row {
+        display: flex; align-items: center; gap: 10px; margin-bottom: var(--gap);
+        opacity: 0; transform: translateX(-16px);
+        transition: opacity .35s ease, transform .35s ease;
+      }
+      .bar-row.visible { opacity: 1; transform: translateX(0); }
+      .rank {
+        width: 22px; text-align: right; font-size: 10px; color: var(--muted); flex-shrink: 0;
+      }
+      .model-name {
+        width: 160px; flex-shrink: 0; font-size: 11px; font-weight: 500;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .bar-track {
+        flex: 1; height: var(--bar-h); background: rgba(255,255,255,0.04);
+        border-radius: 5px; overflow: hidden; position: relative;
+      }
+      .bar-fill {
+        height: 100%; width: 0%; border-radius: 5px;
+        background: linear-gradient(90deg, var(--green) 0%, #a8e000 100%);
+        box-shadow: 0 0 12px var(--green-glow);
+        transition: width 1s cubic-bezier(0.16,1,0.3,1);
+        position: relative;
+      }
+      .bar-fill.tps { background: linear-gradient(90deg, var(--green) 0%, #a8e000 100%); }
+      .bar-fill.ttft {
+        background: linear-gradient(90deg, var(--cyan) 0%, #0099cc 100%);
+        box-shadow: 0 0 12px rgba(0,212,255,0.3);
+      }
+      .bar-fill.top { background: linear-gradient(90deg, #00d4ff 0%, var(--green) 100%); box-shadow: 0 0 20px rgba(0,212,255,0.4); }
+      .bar-fill::after {
+        content: ""; position: absolute; inset: 0;
+        background: linear-gradient(90deg, transparent 60%, rgba(255,255,255,0.1) 100%);
+      }
+      .bar-val {
+        width: 80px; flex-shrink: 0; font-size: 12px; font-weight: 600; text-align: right;
+      }
+      .bar-val .unit { font-size: 9px; color: var(--muted); font-weight: 400; }
+      .error-row .bar-val { color: var(--muted); font-size: 10px; }
+      .error-row .bar-fill { background: rgba(255,60,60,0.25); box-shadow: none; }
+
+      .axis {
+        border-top: 1px solid var(--border); margin-top: 16px; padding-top: 6px;
+        display: flex; justify-content: flex-end;
+      }
+      .axis-label { font-size: 10px; color: var(--muted); letter-spacing: .5px; }
+
+      /* ── Results Table ── */
+      .results-table-wrap { overflow-x: auto; margin-top: 12px; }
+      .results-table {
+        width: 100%; border-collapse: collapse; font-size: 12px;
+      }
+      .results-table th {
+        text-align: left; padding: 8px 12px; color: var(--muted);
+        font-weight: 500; font-size: 10px; text-transform: uppercase;
+        letter-spacing: .5px; border-bottom: 1px solid var(--border);
+      }
+      .results-table td {
+        padding: 7px 12px; border-bottom: 1px solid rgba(255,255,255,0.03);
+      }
+      .results-table tr:hover td { background: var(--surface-hover); }
+      .results-table .status-ok { color: var(--green); }
+      .results-table .status-error { color: var(--red); }
+
+      /* ── Loading ── */
+      .loading-state { text-align: center; padding: 40px 0; }
+      .loading-state p { color: var(--muted); margin-top: 10px; font-size: 13px; }
+      .spinner {
+        width: 32px; height: 32px; border: 3px solid var(--border);
+        border-top-color: var(--green); border-radius: 50%;
+        animation: spin .7s linear infinite; margin: 0 auto;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      .hidden { display: none !important; }
+
+      /* ── Responsive ── */
+      @media (max-width: 700px) {
+        body { padding: 16px 12px 40px; }
+        .section { padding: 16px; }
+        .model-name { width: 100px; }
+        .bar-val { width: 60px; }
+        .config-row .field { min-width: 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="nvidia-badge">⬛ NVIDIA NIM</div>
+        <h1>Model Speed Benchmark</h1>
+        <p class="subtitle">
+          Discover available models · Test latency &amp; throughput ·
+          <span>Free tier</span>
+        </p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-target="tab-models">Models</button>
+        <button class="tab" data-target="tab-benchmark">Benchmark</button>
+        <button class="tab" data-target="tab-results">Results</button>
+      </div>
+
+      <!-- ── Models Tab ── -->
+      <div id="tab-models" class="section active">
+        <div class="section-title">
+          Available Models
+          <span class="badge" id="model-count-badge">0</span>
+        </div>
+
+        <div class="search-bar">
+          <input type="text" id="model-search" placeholder="Search models…" />
+          <button class="btn btn-secondary btn-sm" id="select-all-btn">Select All</button>
+          <button class="btn btn-secondary btn-sm" id="select-available-btn">Select Available</button>
+          <button class="btn btn-secondary btn-sm" id="deselect-all-btn">Deselect All</button>
+          <button class="btn btn-primary btn-sm" id="refresh-models-btn">Refresh</button>
+        </div>
+
+        <div class="model-count" id="model-count-text">0 models loaded</div>
+        <div class="model-table" id="model-table">
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Fetching models from NVIDIA API…</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Benchmark Tab ── -->
+      <div id="tab-benchmark" class="section">
+        <div class="section-title">Configuration</div>
+
+        <div class="config-row">
+          <div class="field">
+            <label>Prompt</label>
+            <textarea id="prompt-input">What is the capital of India? Please answer in one sentence.</textarea>
+          </div>
+          <button class="btn btn-primary" id="start-btn">Run Benchmark</button>
+          <button class="btn btn-danger hidden" id="stop-btn">Stop</button>
+        </div>
+
+        <div class="selected-info" id="selected-info">
+          <span id="selected-count-display">0</span> models selected
+        </div>
+
+        <!-- Progress -->
+        <div id="progress-section" class="hidden" style="margin-top: 24px;">
+          <div class="section-title" style="margin-bottom: 12px;">
+            Progress
+            <span class="badge" id="progress-percent">0%</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+          </div>
+          <div class="progress-status" id="progress-status">Waiting…</div>
+          <div class="progress-log" id="progress-log"></div>
+        </div>
+      </div>
+
+      <!-- ── Results Tab ── -->
+      <div id="tab-results" class="section">
+        <div class="section-title">
+          Benchmark Results
+          <span class="badge" id="result-count-badge">0</span>
+        </div>
+
+        <div id="results-empty" class="loading-state">
+          <p>No results yet. Run a benchmark first.</p>
+        </div>
+
+        <div id="results-content" class="hidden">
+          <div class="result-controls">
+            <button class="btn btn-secondary btn-sm" id="refresh-results-btn">Refresh</button>
+            <button class="btn btn-danger btn-sm" id="clear-results-btn">Clear</button>
+          </div>
+
+          <div class="cards" id="result-cards"></div>
+
+          <div class="chart-section">
+            <div class="chart-title">Tokens per Second ↑ (higher is better)</div>
+            <div class="chart-wrap" id="tps-chart"></div>
+            <div class="axis"><span class="axis-label">tokens / second →</span></div>
+          </div>
+
+          <div class="chart-section">
+            <div class="chart-title">Time to First Token ↓ (lower is better)</div>
+            <div class="chart-wrap" id="ttft-chart"></div>
+            <div class="axis"><span class="axis-label">seconds →</span></div>
+          </div>
+
+          <div class="chart-section">
+            <div class="chart-title">Detailed Results</div>
+            <div class="results-table-wrap" id="results-table-wrap"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer" style="text-align:center;margin-top:32px;font-size:11px;color:var(--muted);">
+        API: <span style="color:var(--green);">integrate.api.nvidia.com/v1</span>
+        &nbsp;·&nbsp; NVIDIA NIM Benchmark Tool
+      </div>
+    </div>
+
+    <script>
+      // ── State ──
+      let allModels = [];
+      let selectedModels = new Set();
+      let modelStatuses = {};
+      let eventSource = null;
+      let validateES = null;
+      let isBenchmarking = false;
+      let isFetchingModels = false;
+
+      // ── Tab Switching ──
+      document.querySelectorAll(".tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+          document.querySelectorAll(".section").forEach((s) => s.classList.remove("active"));
+          document.getElementById(tab.dataset.target).classList.add("active");
+          if (tab.dataset.target === "tab-results") renderResults();
+        });
+      });
+
+      // ── Model Fetching ──
+      async function fetchModels() {
+        if (isFetchingModels) return;
+        isFetchingModels = true;
+        const table = document.getElementById("model-table");
+        table.innerHTML =
+          `<div class="loading-state"><div class="spinner"></div><p>Fetching models from NVIDIA API…</p></div>`;
+
+        try {
+          const res = await fetch("/api/models");
+          const data = await res.json();
+          allModels = data.models || [];
+          modelStatuses = data.statuses || {};
+          renderModelTable(allModels);
+
+          // Connect to validation SSE (backend auto-starts validation on first fetch)
+          connectValidationSSE();
+        } catch (e) {
+          table.innerHTML =
+            `<div class="loading-state"><p style="color:var(--red);">Error fetching models: ${e.message}</p></div>`;
+        }
+        isFetchingModels = false;
+      }
+
+      function connectValidationSSE() {
+        if (validateES) {
+          validateES.close();
+        }
+        validateES = new EventSource("/api/models/validate/events");
+        validateES.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === "validate_result") {
+              modelStatuses[msg.model_id] = msg.status;
+              updateModelRowDot(msg.model_id, msg.status);
+              updateModelCounts();
+            } else if (msg.type === "validate_done") {
+              if (validateES) validateES.close();
+              validateES = null;
+              updateModelCounts();
+            }
+          } catch {}
+        };
+        validateES.onerror = () => {};
+      }
+
+      function updateModelRowDot(modelId, status) {
+        const rows = document.querySelectorAll("#model-table .model-row");
+        rows.forEach((row) => {
+          const cb = row.querySelector("input[type=checkbox]");
+          if (cb && cb.value === modelId) {
+            const dot = row.querySelector(".model-status-dot");
+            if (dot) {
+              dot.className = "model-status-dot " + (status === "available" ? "available" : status === "unavailable" ? "unavailable" : status === "checking" ? "checking" : "unknown");
+              dot.title = status.charAt(0).toUpperCase() + status.slice(1);
+            }
+          }
+        });
+      }
+
+      function updateModelCounts() {
+        const available = Object.values(modelStatuses).filter((s) => s === "available").length;
+        const unavailable = Object.values(modelStatuses).filter((s) => s === "unavailable").length;
+        const checking = Object.values(modelStatuses).filter((s) => s === "checking").length;
+        const unknown = Object.values(modelStatuses).filter((s) => s === "unknown").length;
+        const parts = [];
+        if (available) parts.push(`<span style="color:var(--green)">${available} available</span>`);
+        if (unavailable) parts.push(`<span style="color:var(--red)">${unavailable} unavailable</span>`);
+        if (checking) parts.push(`<span style="color:#facc15">${checking} checking…</span>`);
+        if (unknown) parts.push(`<span style="color:var(--muted)">${unknown} unknown</span>`);
+        document.getElementById("model-count-text").innerHTML =
+          `${allModels.length} models &middot; ` + parts.join(" &middot; ");
+      }
+
+      function renderModelTable(models) {
+        const table = document.getElementById("model-table");
+        document.getElementById("model-count-badge").textContent = models.length;
+        updateModelCounts();
+
+        if (!models.length) {
+          table.innerHTML =
+            `<div class="loading-state"><p>No models found via API. Check your API key.</p></div>`;
+          return;
+        }
+
+        const search = (document.getElementById("model-search").value || "").toLowerCase();
+        const filtered = search
+          ? models.filter((m) => m.id.toLowerCase().includes(search))
+          : models;
+
+        if (!filtered.length) {
+          table.innerHTML = `<div class="loading-state"><p>No models match your search.</p></div>`;
+          return;
+        }
+
+        // Sort: available first, then checking, then unknown, then unavailable
+        const sorted = [...filtered].sort((a, b) => {
+          const order = { available: 0, checking: 1, unknown: 2, unavailable: 3 };
+          return (order[modelStatuses[a.id]] || 2) - (order[modelStatuses[b.id]] || 2);
+        });
+
+        let html = "";
+        sorted.forEach((m) => {
+          const checked = selectedModels.has(m.id) ? "checked" : "";
+          const status = modelStatuses[m.id] || "unknown";
+          const dotClass = status === "available" ? "available" : status === "unavailable" ? "unavailable" : status === "checking" ? "checking" : "unknown";
+          const displayName = m.id.split("/").pop().replace(/-/g, " ").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+          html += `
+            <div class="model-row" data-status="${status}">
+              <label>
+                <input type="checkbox" value="${m.id}" ${checked} />
+                <span>${displayName}</span>
+              </label>
+              <span class="model-id" title="${m.id}">${m.id}</span>
+              <span class="model-status-dot ${dotClass}" title="${status}"></span>
+            </div>`;
+        });
+        table.innerHTML = html;
+
+        table.querySelectorAll("input[type=checkbox]").forEach((cb) => {
+          cb.addEventListener("change", () => {
+            if (cb.checked) selectedModels.add(cb.value);
+            else selectedModels.delete(cb.value);
+            updateSelectedInfo();
+          });
+          cb.checked = selectedModels.has(cb.value);
+        });
+      }
+
+      function updateSelectedInfo() {
+        const total = selectedModels.size;
+        const avail = Array.from(selectedModels).filter((id) => modelStatuses[id] === "available").length;
+        const unavail = total - avail;
+        let text = `${total} models selected`;
+        if (unavail > 0) {
+          text += ` &middot; <span style="color:var(--red)">${unavail} unavailable</span>`;
+        }
+        document.getElementById("selected-count-display").innerHTML = text;
+      }
+
+      // ── Model Search ──
+      document.getElementById("model-search").addEventListener("input", () => {
+        renderModelTable(allModels);
+      });
+
+      document.getElementById("select-all-btn").addEventListener("click", () => {
+        const search = (document.getElementById("model-search").value || "").toLowerCase();
+        const toSelect = search
+          ? allModels.filter((m) => m.id.toLowerCase().includes(search))
+          : allModels;
+        toSelect.forEach((m) => selectedModels.add(m.id));
+        renderModelTable(allModels);
+        updateSelectedInfo();
+      });
+
+      document.getElementById("deselect-all-btn").addEventListener("click", () => {
+        selectedModels.clear();
+        renderModelTable(allModels);
+        updateSelectedInfo();
+      });
+
+      document.getElementById("select-available-btn").addEventListener("click", () => {
+        const search = (document.getElementById("model-search").value || "").toLowerCase();
+        const filtered = search
+          ? allModels.filter((m) => m.id.toLowerCase().includes(search))
+          : allModels;
+        filtered.forEach((m) => {
+          if (modelStatuses[m.id] === "available") {
+            selectedModels.add(m.id);
+          }
+        });
+        renderModelTable(allModels);
+        updateSelectedInfo();
+      });
+
+      document.getElementById("refresh-models-btn").addEventListener("click", () => {
+        fetchModels();
+      });
+
+      // ── Benchmark ──
+      document.getElementById("start-btn").addEventListener("click", startBenchmark);
+      document.getElementById("stop-btn").addEventListener("click", stopBenchmark);
+
+      async function startBenchmark() {
+        let modelIds = Array.from(selectedModels);
+        if (!modelIds.length) {
+          alert("Select at least one model to benchmark.");
+          return;
+        }
+
+        // Filter models
+        const unavailable = modelIds.filter((id) => modelStatuses[id] === "unavailable");
+        const unknown = modelIds.filter((id) => !modelStatuses[id] || modelStatuses[id] === "unknown" || modelStatuses[id] === "checking");
+        const available = modelIds.filter((id) => modelStatuses[id] === "available");
+        const testable = modelIds.filter((id) => modelStatuses[id] !== "unavailable");
+
+        if (!testable.length) {
+          alert("All selected models are marked as unavailable (404/410). Nothing to benchmark.");
+          return;
+        }
+
+        if (unavailable.length > 0 || unknown.length > 0) {
+          let msg = `Proceeding with ${testable.length} model(s).`;
+          if (unavailable.length > 0) msg += ` ${unavailable.length} unavailable will be skipped.`;
+          if (unknown.length > 0) msg += ` ${unknown.length} unvalidated will be included (may fail).`;
+          if (!confirm(msg + " Continue?")) return;
+          modelIds = testable;
+        }
+
+        const prompt = document.getElementById("prompt-input").value.trim();
+        if (!prompt) {
+          alert("Enter a prompt.");
+          return;
+        }
+
+        isBenchmarking = true;
+        document.getElementById("start-btn").disabled = true;
+        document.getElementById("start-btn").classList.add("hidden");
+        document.getElementById("stop-btn").classList.remove("hidden");
+
+        const log = document.getElementById("progress-log");
+        log.innerHTML = "";
+        document.getElementById("progress-section").classList.remove("hidden");
+
+        try { await fetch("/api/results", { method: "DELETE" }); } catch {}
+
+        try {
+          const res = await fetch("/api/benchmark/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ model_ids: modelIds, prompt }),
+          });
+          const data = await res.json();
+          if (data.error) {
+            addLog(`Error: ${data.error}`, "log-error");
+            finishBenchmark();
+            return;
+          }
+        } catch (e) {
+          addLog(`Error starting benchmark: ${e.message}`, "log-error");
+          finishBenchmark();
+          return;
+        }
+
+        eventSource = new EventSource("/api/benchmark/events");
+        eventSource.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data);
+            handleSSEMessage(msg);
+          } catch {}
+        };
+        eventSource.onerror = () => {
+          addLog("Connection lost. Reconnecting…", "log-error");
+        };
+      }
+
+      function handleSSEMessage(msg) {
+        const fill = document.getElementById("progress-fill");
+        const status = document.getElementById("progress-status");
+
+        switch (msg.type) {
+          case "start":
+            addLog(`Starting benchmark of ${msg.total} models${msg.skipped ? ` (${msg.skipped} filtered out)` : ""}…`, "log-testing");
+            break;
+
+          case "progress":
+            status.innerHTML =
+              `Testing <strong>${msg.label || msg.model_id}</strong> &middot; ${msg.done}/${msg.total}`;
+            addLog(`[${msg.done + 1}/${msg.total}] Testing: ${msg.model_id}`, "log-testing");
+            break;
+
+          case "result":
+            const pct = ((msg.done / msg.total) * 100).toFixed(0);
+            fill.style.width = pct + "%";
+            document.getElementById("progress-percent").textContent = pct + "%";
+            status.innerHTML =
+              `${msg.done}/${msg.total} &middot; ` +
+              (msg.status === "ok"
+                ? `${msg.tokens_per_second} tok/s`
+                : `Error: ${msg.error ? msg.error.slice(0, 60) : "failed"}`);
+            if (msg.status === "ok") {
+              addLog(
+                `[${msg.done}/${msg.total}] ${msg.label}: ${msg.tokens_per_second} tok/s (TTFT: ${msg.ttft_s}s)`,
+                "log-ok"
+              );
+            } else {
+              addLog(
+                `[${msg.done}/${msg.total}] ${msg.label}: ${msg.error ? msg.error.slice(0, 80) : "ERROR"}`,
+                "log-error"
+              );
+            }
+            break;
+
+          case "skip":
+            const spct = ((msg.done / msg.total) * 100).toFixed(0);
+            fill.style.width = spct + "%";
+            document.getElementById("progress-percent").textContent = spct + "%";
+            addLog(`[${msg.done}/${msg.total}] Skipped (already done): ${msg.model_id}`, "log-skip");
+            break;
+
+          case "error":
+            addLog(`Error: ${msg.message}`, "log-error");
+            status.innerHTML = msg.message;
+            finishBenchmark();
+            eventSource.close();
+            eventSource = null;
+            break;
+
+          case "done":
+            fill.style.width = "100%";
+            document.getElementById("progress-percent").textContent = "100%";
+            status.innerHTML = "Benchmark complete!";
+            addLog("Benchmark complete!", "log-done");
+            if (eventSource) { eventSource.close(); eventSource = null; }
+            finishBenchmark();
+            document.querySelector('.tab[data-target="tab-results"]').click();
+            break;
+
+          case "ping":
+            break;
+        }
+      }
+
+      function addLog(text, cls = "") {
+        const log = document.getElementById("progress-log");
+        const entry = document.createElement("div");
+        entry.className = "log-entry " + cls;
+        entry.textContent = text;
+        log.appendChild(entry);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      function finishBenchmark() {
+        isBenchmarking = false;
+        document.getElementById("start-btn").disabled = false;
+        document.getElementById("start-btn").classList.remove("hidden");
+        document.getElementById("stop-btn").classList.add("hidden");
+        if (eventSource) { eventSource.close(); eventSource = null; }
+        renderResults();
+      }
+
+      function stopBenchmark() {
+        if (eventSource) { eventSource.close(); eventSource = null; }
+        finishBenchmark();
+        addLog("Benchmark stopped by user.", "log-error");
+        renderResults();
+      }
+
+      // ── Results ──
+      async function renderResults() {
+        const empty = document.getElementById("results-empty");
+        const content = document.getElementById("results-content");
+
+        let results;
+        try {
+          const res = await fetch("/api/results");
+          const data = await res.json();
+          results = data.results || [];
+        } catch {
+          empty.classList.remove("hidden");
+          content.classList.add("hidden");
+          return;
+        }
+
+        document.getElementById("result-count-badge").textContent = results.length;
+
+        if (!results.length) {
+          empty.classList.remove("hidden");
+          content.classList.add("hidden");
+          return;
+        }
+
+        empty.classList.add("hidden");
+        content.classList.remove("hidden");
+
+        const ok = results
+          .filter((r) => r.status === "ok")
+          .sort((a, b) => b.tokens_per_second - a.tokens_per_second);
+        const errors = results.filter((r) => r.status !== "ok");
+        const all = [...ok, ...errors];
+        const maxTps = ok.length ? ok[0].tokens_per_second : 1;
+        const minTtft = ok.length
+          ? Math.min(...ok.map((r) => r.ttft_s || Infinity))
+          : 0;
+        const avgTps = ok.length
+          ? (ok.reduce((s, r) => s + r.tokens_per_second, 0) / ok.length).toFixed(1)
+          : "—";
+
+        document.getElementById("result-cards").innerHTML = `
+          <div class="card">
+            <div class="card-val">${ok.length}</div>
+            <div class="card-label">Models Tested</div>
+          </div>
+          <div class="card">
+            <div class="card-val">${ok.length ? safeVal(ok[0].tokens_per_second, 1) : "—"}</div>
+            <div class="card-label">Fastest (tok/s)</div>
+          </div>
+          <div class="card">
+            <div class="card-val">${avgTps}</div>
+            <div class="card-label">Average (tok/s)</div>
+          </div>
+          <div class="card">
+            <div class="card-val cyan">${minTtft != null && minTtft > 0 && minTtft < 999 ? safeVal(minTtft, 3) + "s" : "—"}</div>
+            <div class="card-label">Best TTFT</div>
+          </div>
+          <div class="card">
+            <div class="card-val">${ok.length ? ok[0].label.split(" ").slice(0, 2).join(" ") : "—"}</div>
+            <div class="card-label">Winner</div>
+          </div>
+        `;
+
+        renderBarChart("tps-chart", ok, "tps", maxTps, "tok/s");
+
+        const ttftSorted = [...ok]
+          .filter((r) => r.ttft_s != null)
+          .sort((a, b) => (a.ttft_s || 0) - (b.ttft_s || 0));
+        const maxTtftVal = ttftSorted.length
+          ? Math.max(...ttftSorted.map((r) => r.ttft_s || 0))
+          : 1;
+        renderBarChart("ttft-chart", ttftSorted, "ttft", maxTtftVal, "s");
+
+        renderResultsTable(all);
+      }
+
+      function chartVal(v, fallback = 0) {
+        if (v == null || typeof v !== "number" || !isFinite(v) || v < 0 || v > 3600) return fallback;
+        return v;
+      }
+
+      function renderBarChart(containerId, items, metric, maxVal, unit) {
+        const container = document.getElementById(containerId);
+        if (!items.length) {
+          container.innerHTML = `<div class="loading-state"><p>No data</p></div>`;
+          return;
+        }
+
+        container.innerHTML = "";
+        items.forEach((d, i) => {
+          const val = chartVal(metric === "tps" ? d.tokens_per_second : d.ttft_s);
+          const pct = maxVal > 0 ? (val / maxVal) * 100 : 0;
+          const isTop = i === 0 && metric === "tps";
+          const isError = d.status !== "ok";
+
+          const row = document.createElement("div");
+          row.className = "bar-row" + (isError ? " error-row" : "");
+          row.innerHTML = `
+            <div class="rank">${isError ? "✗" : i + 1}</div>
+            <div class="model-name" title="${d.id}">${d.label}</div>
+            <div class="bar-track">
+              <div class="bar-fill ${metric} ${isTop ? "top" : ""}" data-pct="${pct}" style="width:0%"></div>
+            </div>
+            <div class="bar-val">
+              ${isError
+                ? `<span style="font-size:10px;color:#6b7280">error</span>`
+                : `${metric === "tps" ? val.toFixed(1) : val.toFixed(3)} <span class="unit">${unit}</span>`
+              }
+            </div>`;
+          container.appendChild(row);
+        });
+
+        const rows = container.querySelectorAll(".bar-row");
+        rows.forEach((row, i) => {
+          setTimeout(() => {
+            row.classList.add("visible");
+            const fill = row.querySelector(".bar-fill");
+            setTimeout(() => {
+              fill.style.width = fill.dataset.pct + "%";
+            }, 80);
+          }, i * 50);
+        });
+      }
+
+      function safeVal(v, decimals = 2, fallback = "—") {
+        if (v == null) return fallback;
+        if (typeof v !== "number" || !isFinite(v) || v < 0 || v > 3600) return fallback;
+        return v.toFixed(decimals);
+      }
+
+      function renderResultsTable(all) {
+        const wrap = document.getElementById("results-table-wrap");
+        let html = `<table class="results-table">
+          <thead><tr>
+            <th>#</th>
+            <th>Model</th>
+            <th>Status</th>
+            <th>Tok/s</th>
+            <th>TTFT (s)</th>
+            <th>Time (s)</th>
+            <th>Tokens</th>
+            <th>Response</th>
+          </tr></thead><tbody>`;
+
+        all.forEach((r, i) => {
+          const statusClass = r.status === "ok" ? "status-ok" : "status-error";
+          const preview = r.response_preview
+            ? r.response_preview.length > 40
+              ? r.response_preview.slice(0, 38) + "…"
+              : r.response_preview
+            : r.error
+              ? r.error.slice(0, 40)
+              : "—";
+          html += `<tr>
+            <td>${i + 1}</td>
+            <td title="${r.id}">${r.label}</td>
+            <td class="${statusClass}">${r.status}</td>
+            <td>${r.status === "ok" ? safeVal(r.tokens_per_second, 1) : "—"}</td>
+            <td>${safeVal(r.ttft_s, 3)}</td>
+            <td>${safeVal(r.total_time_s, 2)}</td>
+            <td>${r.tokens || "—"}</td>
+            <td style="font-size:11px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${preview}">${preview}</td>
+          </tr>`;
+        });
+
+        html += "</tbody></table>";
+        wrap.innerHTML = html;
+      }
+
+      document.getElementById("refresh-results-btn").addEventListener("click", renderResults);
+
+      document.getElementById("clear-results-btn").addEventListener("click", async () => {
+        if (!confirm("Clear all results?")) return;
+        try { await fetch("/api/results", { method: "DELETE" }); } catch {}
+        renderResults();
+      });
+
+      // ── Init ──
+      fetchModels();
+      renderResults();
+
+      // Periodic results refresh
+      setInterval(() => {
+        if (document.getElementById("tab-results").classList.contains("active")) {
+          renderResults();
+        }
+      }, 5000);
+
+      // Periodic model status poll (backup for SSE)
+      setInterval(async () => {
+        if (!document.getElementById("tab-models").classList.contains("active")) return;
+        try {
+          const res = await fetch("/api/models/status");
+          const data = await res.json();
+          if (data.statuses) {
+            let changed = false;
+            for (const [id, status] of Object.entries(data.statuses)) {
+              if (modelStatuses[id] !== status) {
+                modelStatuses[id] = status;
+                changed = true;
+                updateModelRowDot(id, status);
+              }
+            }
+            if (changed) updateModelCounts();
+          }
+        } catch {}
+      }, 3000);
+    </script>
+  </body>
+</html>

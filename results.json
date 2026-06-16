@@ -1,42 +1,22 @@
 [
   {
-    "id": "nvidia/nemotron-3-content-safety",
-    "label": "Nemotron Content Safety",
+    "id": "abacusai/dracarys-llama-3.1-70b-instruct",
+    "label": "abacusai/dracarys-llama-3.1-70b-instruct",
     "status": "ok",
-    "total_time_s": 0.909,
-    "tokens": 4,
-    "tokens_per_second": 4.4,
-    "ttft_s": 0.872,
-    "response_preview": "User Safety: safe"
+    "total_time_s": 0.733,
+    "tokens": 8,
+    "tokens_per_second": 10.92,
+    "ttft_s": 0.337,
+    "response_preview": "The capital of India is New Delhi."
   },
   {
-    "id": "z-ai/glm4.7",
-    "label": "GLM 4.7",
-    "status": "error",
-    "error": "Error code: 410 - {'type': 'about:blank', 'title': 'Gone', 'status': 410, 'detail': \"The model 'z-ai/glm4.7' has reached its end of life on 2026-05-14T00:00:00Z and is no longer available.\"}",
-    "total_time_s": null,
-    "tokens": 0,
-    "tokens_per_second": 0,
-    "ttft_s": null
-  },
-  {
-    "id": "minimaxai/minimax-m2.7",
-    "label": "MiniMax M2.7",
+    "id": "bytedance/seed-oss-36b-instruct",
+    "label": "bytedance/seed-oss-36b-instruct",
     "status": "ok",
-    "total_time_s": 3.547,
-    "tokens": 11,
-    "tokens_per_second": 3.1,
-    "ttft_s": 1.135,
-    "response_preview": "\n\nThe capital of India is New\u202fDelhi."
-  },
-  {
-    "id": "stepfun-ai/step-3.5-flash",
-    "label": "Step 3.5 Flash",
-    "status": "ok",
-    "total_time_s": 1.377,
-    "tokens": 2,
-    "tokens_per_second": 1.45,
-    "ttft_s": 1.341,
+    "total_time_s": 73.206,
+    "tokens": 8,
+    "tokens_per_second": 0.11,
+    "ttft_s": 72.5,
     "response_preview": "The capital of India is New Delhi."
   }
 ]

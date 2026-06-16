@@ -1,11 +1,11 @@
-# NVIDIA NIM — LLM Speed Benchmark
+# NVIDIA NIM — Model Speed Benchmark
 
-Benchmarks 20 free NVIDIA NIM models on the same prompt and visualizes results as an animated bar chart.
+Dynamically discovers available NVIDIA NIM models, benchmarks their latency and throughput, and displays results in an interactive web dashboard.
 
 ## Setup
 
 ```bash
-pip install openai python-dotenv
+pip install -r requirements.txt
 ```
 
 Add your API key to `.env`:
@@ -13,31 +13,33 @@ Add your API key to `.env`:
 NVIDIA_API_KEY=your_key_here
 ```
 
-## Run
+## Usage
+
+### Web App (recommended)
 
 ```bash
-# Fresh run
-python benchmark.py --restart
-
-# Resume after interruption
-python benchmark.py --resume
+python server.py
+# open http://localhost:8000
 ```
 
-Results are saved to `results.json` after every model — safe to interrupt and resume.
+Three tabs:
+1. **Models** — Browse all available NVIDIA NIM models (dynamically fetched), search and select which to test
+2. **Benchmark** — Configure prompt, run the benchmark, watch real-time progress via SSE
+3. **Results** — View TPS/TTFT bar charts, summary cards, and a detailed results table
 
-## Visualize
+### CLI (original)
 
-Serve the folder and open the chart:
 ```bash
-python -m http.server 8080
-# open http://localhost:8080/visualize.html
+python benchmark.py --restart   # fresh run
+python benchmark.py --resume    # resume interrupted run
 ```
 
 ## Files
 
 | File | Purpose |
-|---|---|
-| `benchmark.py` | Runs the benchmark |
-| `models.json` | List of models to test |
-| `results.json` | Output — generated after running |
-| `visualize.html` | Animated bar chart |
+|------|---------|
+| `server.py` | FastAPI web server (model discovery + benchmarking + UI) |
+| `index.html` | Web dashboard frontend |
+| `benchmark.py` | Original CLI benchmark script |
+| `models.json` | Static model list (fallback if API fails) |
+| `results.json` | Benchmark output (auto-generated) |
