@@ -1,6 +1,6 @@
-# NVIDIA NIM — Model Speed Benchmark
+# NIMBench
 
-Dynamically discovers available NVIDIA NIM models, benchmarks their latency and throughput, and displays results in an interactive web dashboard.
+A real-time benchmarking tool for NVIDIA NIM models. Discovers available models, measures tokens-per-second (TPS) and time-to-first-token (TTFT), and displays results in an interactive web dashboard with live progress, auto-benchmarking, and trend tracking.
 
 ## Setup
 

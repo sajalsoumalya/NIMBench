@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-parser = argparse.ArgumentParser(description="NVIDIA NIM LLM Speed Benchmark")
+parser = argparse.ArgumentParser(description="NIMBench — NVIDIA NIM LLM Speed Benchmark")
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--resume", action="store_true", help="Continue from last completed model (default)")
 group.add_argument("--restart", action="store_true", help="Delete results.json and start from scratch")

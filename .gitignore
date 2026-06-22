@@ -1,2 +1,3 @@
 .env
-Testing-NIM/
+__pycache__/
+*.pyc
