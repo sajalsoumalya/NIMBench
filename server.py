@@ -79,41 +79,43 @@ def make_label(model_id: str) -> str:
 async def auto_benchmark_loop():
     global auto_benchmark_running, last_auto_benchmark_time, auto_benchmark_results, auto_benchmark_history
     await asyncio.sleep(10)
-    retry_short = 30
+    model_index = 0
     while True:
         try:
             if auto_benchmark_enabled:
                 available_ids = [mid for mid, status in model_status.items() if status == "available"]
                 if available_ids:
+                    if model_index >= len(available_ids):
+                        model_index = 0
+                    mid = available_ids[model_index]
+                    model_index += 1
+
                     auto_benchmark_running = True
                     timestamp = time.time()
-                    results = []
+                    label = make_label(mid)
+                    result = await asyncio.to_thread(benchmark_model_sync, mid, label, auto_benchmark_prompt)
+                    result["auto_timestamp"] = timestamp
 
-                    for mid in available_ids:
-                        label = make_label(mid)
-                        result = await asyncio.to_thread(benchmark_model_sync, mid, label, auto_benchmark_prompt)
-                        result["auto_timestamp"] = timestamp
-                        results.append(result)
-                        await asyncio.sleep(RATE_LIMIT_WAIT)
-
-                    auto_benchmark_results = results
+                    results_map = {r["id"]: r for r in auto_benchmark_results}
+                    results_map[mid] = result
+                    auto_benchmark_results = list(results_map.values())
                     last_auto_benchmark_time = timestamp
 
-                    auto_benchmark_history.append({"timestamp": timestamp, "results": results})
+                    auto_benchmark_history.append({"timestamp": timestamp, "results": [result]})
                     if len(auto_benchmark_history) > AUTO_BENCHMARK_HISTORY_MAX:
                         auto_benchmark_history = auto_benchmark_history[-AUTO_BENCHMARK_HISTORY_MAX:]
 
                     auto_benchmark_running = False
-                    await asyncio.sleep(auto_benchmark_interval)
+                    await asyncio.sleep(60)
                 else:
-                    await asyncio.sleep(retry_short)
+                    await asyncio.sleep(30)
             else:
-                await asyncio.sleep(auto_benchmark_interval)
+                await asyncio.sleep(60)
         except asyncio.CancelledError:
             break
         except Exception:
             auto_benchmark_running = False
-            await asyncio.sleep(auto_benchmark_interval)
+            await asyncio.sleep(60)
 
 
 async def startup_model_fetch():
