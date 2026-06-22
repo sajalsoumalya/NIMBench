@@ -377,13 +377,13 @@
 
       <!-- Tabs -->
       <div class="tabs">
-        <button class="tab active" data-target="tab-models">Models</button>
+        <button class="tab" data-target="tab-models">Models</button>
         <button class="tab" data-target="tab-benchmark">Benchmark</button>
-        <button class="tab" data-target="tab-results">Results</button>
+        <button class="tab active" data-target="tab-results">Results</button>
       </div>
 
       <!-- ── Models Tab ── -->
-      <div id="tab-models" class="section active">
+      <div id="tab-models" class="section">
         <div class="section-title">
           Available Models
           <span class="badge" id="model-count-badge">0</span>
@@ -453,7 +453,34 @@
       </div>
 
       <!-- ── Results Tab ── -->
-      <div id="tab-results" class="section">
+      <div id="tab-results" class="section active">
+        <div class="section-title">
+          Live Analysis
+          <span class="badge" id="auto-result-badge">Auto</span>
+        </div>
+
+        <div id="auto-results-section">
+          <div class="loading-state" id="auto-results-loading">
+            <div class="spinner"></div>
+            <p>Waiting for auto-benchmark results…</p>
+          </div>
+          <div id="auto-results-content" class="hidden">
+            <div class="cards" id="auto-result-cards"></div>
+            <div class="chart-section">
+              <div class="chart-title">Tokens per Second ↑ (higher is better)</div>
+              <div class="chart-wrap" id="auto-tps-chart"></div>
+              <div class="axis"><span class="axis-label">tokens / second →</span></div>
+            </div>
+            <div class="chart-section">
+              <div class="chart-title">Time to First Token ↓ (lower is better)</div>
+              <div class="chart-wrap" id="auto-ttft-chart"></div>
+              <div class="axis"><span class="axis-label">seconds →</span></div>
+            </div>
+          </div>
+        </div>
+
+        <hr style="border-color:var(--border);margin:24px 0;" />
+
         <div class="section-title">
           Benchmark Results
           <span class="badge" id="result-count-badge">0</span>
@@ -523,7 +550,7 @@
           tab.classList.add("active");
           document.querySelectorAll(".section").forEach((s) => s.classList.remove("active"));
           document.getElementById(tab.dataset.target).classList.add("active");
-          if (tab.dataset.target === "tab-results") renderResults();
+          if (tab.dataset.target === "tab-results") { renderAutoResults(); renderResults(); }
         });
       });
 
@@ -1089,13 +1116,81 @@
       setInterval(updateAutoStatus, 5000);
       updateAutoStatus();
 
+      // ── Auto-Benchmark Results ──
+      async function renderAutoResults() {
+        const loading = document.getElementById("auto-results-loading");
+        const content = document.getElementById("auto-results-content");
+
+        try {
+          const res = await fetch("/api/auto-benchmark/results");
+          const data = await res.json();
+          const results = data.results || [];
+
+          if (!results.length) {
+            loading.classList.remove("hidden");
+            content.classList.add("hidden");
+            return;
+          }
+
+          loading.classList.add("hidden");
+          content.classList.remove("hidden");
+
+          const ok = results
+            .filter((r) => r.status === "ok")
+            .sort((a, b) => b.tokens_per_second - a.tokens_per_second);
+          const all = [...ok, ...results.filter((r) => r.status !== "ok")];
+          const maxTps = ok.length ? ok[0].tokens_per_second : 1;
+          const minTtft = ok.length
+            ? Math.min(...ok.map((r) => r.ttft_s || Infinity))
+            : 0;
+          const avgTps = ok.length
+            ? (ok.reduce((s, r) => s + r.tokens_per_second, 0) / ok.length).toFixed(1)
+            : "—";
+
+          document.getElementById("auto-result-cards").innerHTML = `
+            <div class="card">
+              <div class="card-val">${ok.length}</div>
+              <div class="card-label">Models Tested</div>
+            </div>
+            <div class="card">
+              <div class="card-val">${ok.length ? safeVal(ok[0].tokens_per_second, 1) : "—"}</div>
+              <div class="card-label">Fastest (tok/s)</div>
+            </div>
+            <div class="card">
+              <div class="card-val">${avgTps}</div>
+              <div class="card-label">Average (tok/s)</div>
+            </div>
+            <div class="card">
+              <div class="card-val cyan">${minTtft != null && minTtft > 0 && minTtft < 999 ? safeVal(minTtft, 3) + "s" : "—"}</div>
+              <div class="card-label">Best TTFT</div>
+            </div>
+            <div class="card">
+              <div class="card-val">${ok.length ? ok[0].label.split(" ").slice(0, 2).join(" ") : "—"}</div>
+              <div class="card-label">Winner</div>
+            </div>
+          `;
+
+          renderBarChart("auto-tps-chart", ok, "tps", maxTps, "tok/s");
+
+          const ttftSorted = [...ok]
+            .filter((r) => r.ttft_s != null)
+            .sort((a, b) => (a.ttft_s || 0) - (b.ttft_s || 0));
+          const maxTtftVal = ttftSorted.length
+            ? Math.max(...ttftSorted.map((r) => r.ttft_s || 0))
+            : 1;
+          renderBarChart("auto-ttft-chart", ttftSorted, "ttft", maxTtftVal, "s");
+        } catch {}
+      }
+
       // ── Init ──
       fetchModels();
+      renderAutoResults();
       renderResults();
 
-      // Periodic results refresh
+      // Periodic refresh
       setInterval(() => {
         if (document.getElementById("tab-results").classList.contains("active")) {
+          renderAutoResults();
           renderResults();
         }
       }, 5000);
