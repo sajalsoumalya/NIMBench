@@ -78,7 +78,8 @@ def make_label(model_id: str) -> str:
 
 async def auto_benchmark_loop():
     global auto_benchmark_running, last_auto_benchmark_time, auto_benchmark_results, auto_benchmark_history
-    await asyncio.sleep(60)
+    await asyncio.sleep(10)
+    retry_short = 30
     while True:
         try:
             if auto_benchmark_enabled:
@@ -103,8 +104,11 @@ async def auto_benchmark_loop():
                         auto_benchmark_history = auto_benchmark_history[-AUTO_BENCHMARK_HISTORY_MAX:]
 
                     auto_benchmark_running = False
-
-            await asyncio.sleep(auto_benchmark_interval)
+                    await asyncio.sleep(auto_benchmark_interval)
+                else:
+                    await asyncio.sleep(retry_short)
+            else:
+                await asyncio.sleep(auto_benchmark_interval)
         except asyncio.CancelledError:
             break
         except Exception:
@@ -112,9 +116,27 @@ async def auto_benchmark_loop():
             await asyncio.sleep(auto_benchmark_interval)
 
 
+async def startup_model_fetch():
+    global model_status, is_validating, validation_done
+    try:
+        resp = client.models.list()
+        models_list = [{"id": m.id} for m in resp.data]
+    except Exception:
+        try:
+            with open("models.json") as f:
+                models_list = json.load(f)
+        except FileNotFoundError:
+            models_list = []
+    if models_list:
+        for m in models_list:
+            model_status.setdefault(m["id"], "unknown")
+        asyncio.create_task(run_validation(models_list))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     asyncio.create_task(auto_benchmark_loop())
+    asyncio.create_task(startup_model_fetch())
     yield
 
 app = FastAPI(lifespan=lifespan)
