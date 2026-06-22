@@ -97,6 +97,14 @@
       }
       .search-bar input:focus { border-color: var(--green); }
       .search-bar input::placeholder { color: var(--muted); }
+      .sort-select {
+        background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+        border-radius: 8px; padding: 10px 14px; color: var(--text);
+        font-size: 13px; outline: none; cursor: pointer; transition: border .2s;
+        min-width: 150px;
+      }
+      .sort-select:focus { border-color: var(--green); }
+      .sort-select option { background: #1a1a2e; color: var(--text); }
       .btn {
         padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;
         border: none; cursor: pointer; transition: all .2s; white-space: nowrap;
@@ -336,6 +344,12 @@
 
         <div class="search-bar">
           <input type="text" id="model-search" placeholder="Search models…" />
+          <select id="model-sort" class="sort-select">
+            <option value="available-first">Available First</option>
+            <option value="unavailable-first">Unavailable First</option>
+            <option value="name-asc">Name A–Z</option>
+            <option value="name-desc">Name Z–A</option>
+          </select>
           <button class="btn btn-secondary btn-sm" id="select-all-btn">Select All</button>
           <button class="btn btn-secondary btn-sm" id="select-available-btn">Select Available</button>
           <button class="btn btn-secondary btn-sm" id="deselect-all-btn">Deselect All</button>
@@ -435,6 +449,7 @@
       let validateES = null;
       let isBenchmarking = false;
       let isFetchingModels = false;
+      let modelSortOption = "available-first";
 
       // ── Tab Switching ──
       document.querySelectorAll(".tab").forEach((tab) => {
@@ -542,10 +557,17 @@
           return;
         }
 
-        // Sort: available first, then checking, then unknown, then unavailable
+        // Sort based on selected option
         const sorted = [...filtered].sort((a, b) => {
-          const order = { available: 0, checking: 1, unknown: 2, unavailable: 3 };
-          return (order[modelStatuses[a.id]] || 2) - (order[modelStatuses[b.id]] || 2);
+          const statusOrder = { available: 0, checking: 1, unknown: 2, unavailable: 3 };
+          const sa = statusOrder[modelStatuses[a.id]] ?? 2;
+          const sb = statusOrder[modelStatuses[b.id]] ?? 2;
+          switch (modelSortOption) {
+            case "unavailable-first": return sb - sa;
+            case "name-asc": return a.id.localeCompare(b.id);
+            case "name-desc": return b.id.localeCompare(a.id);
+            default: return sa - sb; // available-first
+          }
         });
 
         let html = "";
@@ -587,8 +609,13 @@
         document.getElementById("selected-count-display").innerHTML = text;
       }
 
-      // ── Model Search ──
+      // ── Model Search & Sort ──
       document.getElementById("model-search").addEventListener("input", () => {
+        renderModelTable(allModels);
+      });
+
+      document.getElementById("model-sort").addEventListener("change", (e) => {
+        modelSortOption = e.target.value;
         renderModelTable(allModels);
       });
 
