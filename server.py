@@ -36,6 +36,16 @@ validation_done = False
 cached_results: list = []
 results_loaded = False
 
+# 24/7 Auto-benchmark state
+auto_benchmark_enabled = True
+auto_benchmark_interval = 600  # 10 minutes
+auto_benchmark_prompt = "Hi"
+auto_benchmark_running = False
+last_auto_benchmark_time = None
+auto_benchmark_results: list = []  # latest full run results with timestamp
+auto_benchmark_history: list = []  # last 24 runs for trend
+AUTO_BENCHMARK_HISTORY_MAX = 24
+
 
 def ensure_results_cached():
     global cached_results, results_loaded
@@ -66,8 +76,45 @@ def make_label(model_id: str) -> str:
     return model_id.split("/")[-1].replace("-", " ").replace("_", " ").title()
 
 
+async def auto_benchmark_loop():
+    global auto_benchmark_running, last_auto_benchmark_time, auto_benchmark_results, auto_benchmark_history
+    await asyncio.sleep(60)
+    while True:
+        try:
+            if auto_benchmark_enabled:
+                available_ids = [mid for mid, status in model_status.items() if status == "available"]
+                if available_ids:
+                    auto_benchmark_running = True
+                    timestamp = time.time()
+                    results = []
+
+                    for mid in available_ids:
+                        label = make_label(mid)
+                        result = await asyncio.to_thread(benchmark_model_sync, mid, label, auto_benchmark_prompt)
+                        result["auto_timestamp"] = timestamp
+                        results.append(result)
+                        await asyncio.sleep(RATE_LIMIT_WAIT)
+
+                    auto_benchmark_results = results
+                    last_auto_benchmark_time = timestamp
+
+                    auto_benchmark_history.append({"timestamp": timestamp, "results": results})
+                    if len(auto_benchmark_history) > AUTO_BENCHMARK_HISTORY_MAX:
+                        auto_benchmark_history = auto_benchmark_history[-AUTO_BENCHMARK_HISTORY_MAX:]
+
+                    auto_benchmark_running = False
+
+            await asyncio.sleep(auto_benchmark_interval)
+        except asyncio.CancelledError:
+            break
+        except Exception:
+            auto_benchmark_running = False
+            await asyncio.sleep(auto_benchmark_interval)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    asyncio.create_task(auto_benchmark_loop())
     yield
 
 app = FastAPI(lifespan=lifespan)
@@ -412,6 +459,35 @@ async def clear_results():
         except Exception:
             pass
     return {"status": "cleared"}
+
+
+@app.get("/api/auto-benchmark/status")
+async def get_auto_benchmark_status():
+    return {
+        "enabled": auto_benchmark_enabled,
+        "running": auto_benchmark_running,
+        "interval_s": auto_benchmark_interval,
+        "prompt": auto_benchmark_prompt,
+        "last_run_time": last_auto_benchmark_time,
+        "last_run_ago_s": (time.time() - last_auto_benchmark_time) if last_auto_benchmark_time else None,
+        "model_count": len(auto_benchmark_results),
+    }
+
+
+@app.post("/api/auto-benchmark/toggle")
+async def toggle_auto_benchmark(data: dict):
+    global auto_benchmark_enabled
+    auto_benchmark_enabled = data.get("enabled", not auto_benchmark_enabled)
+    return {"enabled": auto_benchmark_enabled}
+
+
+@app.get("/api/auto-benchmark/results")
+async def get_auto_benchmark_results():
+    return {
+        "last_run_time": last_auto_benchmark_time,
+        "results": auto_benchmark_results,
+        "history": auto_benchmark_history[-6:],  # last hour
+    }
 
 
 @app.get("/")

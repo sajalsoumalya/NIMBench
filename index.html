@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NVIDIA NIM — Model Benchmark</title>
+    <!-- Google AdSense (replace PUBLISHER_ID with your actual AdSense ID) -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-PUBLISHER_ID"
+     crossorigin="anonymous"></script>
+
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap");
 
@@ -53,6 +57,30 @@
       }
       .subtitle { color: var(--muted); font-size: 14px; font-weight: 300; }
       .subtitle span { color: var(--cyan); font-weight: 600; }
+
+      /* ── Auto-Test Status ── */
+      .auto-status {
+        display: flex; align-items: center; justify-content: center; gap: 16px;
+        margin-bottom: 16px; font-size: 12px; color: var(--muted);
+        flex-wrap: wrap;
+      }
+      .auto-status .dot {
+        width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+      }
+      .auto-status .dot.active { background: var(--green); box-shadow: 0 0 6px var(--green-glow); animation: pulse 2s ease-in-out infinite; }
+      .auto-status .dot.idle { background: var(--muted); }
+      .auto-status strong { color: var(--text); }
+      .auto-status .badge { background: var(--green-dim); color: var(--green); padding: 2px 8px; border-radius: 10px; font-size: 10px; }
+
+      /* ── Ad Containers ── */
+      .ad-container {
+        text-align: center; margin: 24px 0; min-height: 90px;
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 10px; display: flex; align-items: center;
+        justify-content: center; font-size: 11px; color: var(--muted);
+        overflow: hidden;
+      }
+      .ad-container ins { display: block; }
 
       .tabs {
         display: flex; gap: 4px; justify-content: center; margin-bottom: 32px;
@@ -326,6 +354,25 @@
           Discover available models · Test latency &amp; throughput ·
           <span>Free tier</span>
         </p>
+
+        <!-- 24/7 Auto-Test Status -->
+        <div class="auto-status" id="auto-status-bar">
+          <span class="dot idle" id="auto-dot"></span>
+          <span>Auto-Test: <strong id="auto-status-text">Starting...</strong></span>
+          <span>Last: <strong id="auto-last-run">—</strong></span>
+          <span>Models tested: <strong id="auto-model-count">0</strong></span>
+          <span class="badge" id="auto-interval-badge">Every 10 min</span>
+        </div>
+      </div>
+
+      <!-- Top Ad Banner -->
+      <div class="ad-container">
+        <!-- AdSense ad unit (replace with your ad unit code) -->
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:728px;height:90px"
+             data-ad-client="ca-pub-PUBLISHER_ID"
+             data-ad-slot="YOUR_AD_SLOT_ID"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
       </div>
 
       <!-- Tabs -->
@@ -396,6 +443,15 @@
         </div>
       </div>
 
+      <!-- Mid-page Ad -->
+      <div class="ad-container">
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:728px;height:90px"
+             data-ad-client="ca-pub-PUBLISHER_ID"
+             data-ad-slot="YOUR_AD_SLOT_ID"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+      </div>
+
       <!-- ── Results Tab ── -->
       <div id="tab-results" class="section">
         <div class="section-title">
@@ -434,9 +490,18 @@
         </div>
       </div>
 
+      <!-- Bottom Ad -->
+      <div class="ad-container">
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:728px;height:90px"
+             data-ad-client="ca-pub-PUBLISHER_ID"
+             data-ad-slot="YOUR_AD_SLOT_ID"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+      </div>
+
       <div class="footer" style="text-align:center;margin-top:32px;font-size:11px;color:var(--muted);">
         API: <span style="color:var(--green);">integrate.api.nvidia.com/v1</span>
-        &nbsp;·&nbsp; NVIDIA NIM Benchmark Tool
+        &nbsp;·&nbsp; NVIDIA NIM Benchmark Tool &nbsp;·&nbsp; 24/7 Auto-Test Active
       </div>
     </div>
 
@@ -998,6 +1063,31 @@
         try { await fetch("/api/results", { method: "DELETE" }); } catch {}
         renderResults();
       });
+
+      // ── 24/7 Auto-Test Status ──
+      async function updateAutoStatus() {
+        try {
+          const res = await fetch("/api/auto-benchmark/status");
+          const data = await res.json();
+
+          const dot = document.getElementById("auto-dot");
+          dot.className = "dot " + (data.running ? "active" : "idle");
+
+          document.getElementById("auto-status-text").textContent = data.enabled ? "Active" : "Paused";
+          document.getElementById("auto-model-count").textContent = data.model_count || "0";
+
+          if (data.last_run_time) {
+            const secs = data.last_run_ago_s;
+            const ago = secs < 60 ? `${Math.round(secs)}s ago` :
+                        secs < 3600 ? `${Math.round(secs / 60)}m ago` :
+                        `${(secs / 3600).toFixed(1)}h ago`;
+            document.getElementById("auto-last-run").textContent = ago;
+          }
+        } catch {}
+      }
+
+      setInterval(updateAutoStatus, 5000);
+      updateAutoStatus();
 
       // ── Init ──
       fetchModels();
